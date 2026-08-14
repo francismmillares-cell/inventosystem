@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#101010" />
+    <meta name="description" content="A mobile-first convenience store inventory, barcode, and visual item lookup tool." />
+    <title>Stockroom — Convenience Inventory</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#scan" aria-label="Stockroom home">
+          <span class="brand-mark">+</span>
+          <span><strong>STOCKROOM</strong><small id="storeNameLabel">CORNER STORE</small></span>
+        </a>
+        <div class="connection-pill"><span class="status-dot"></span><span id="connectionStatus">LOCAL ONLY</span></div>
+      </header>
+
+      <main>
+        <section class="view is-active" id="scanView" data-view-panel="scan">
+          <div class="page-heading">
+            <div><span class="eyebrow">COUNTER / 001</span><h1>Scan &amp; sell.</h1></div>
+            <span class="date-stamp" id="todayLabel"></span>
+          </div>
+
+          <div class="scanner-layout">
+            <article class="scanner-card">
+              <div class="scanner-header"><span class="section-label">CAMERA SCANNER</span><span class="scanner-state" id="scannerState">READY</span></div>
+              <div class="camera-frame">
+                <video id="cameraPreview" playsinline muted></video>
+                <div class="camera-placeholder" id="cameraPlaceholder"><span class="camera-icon">⌁</span><strong>Point at a barcode</strong><small>Use the rear camera on your phone</small></div>
+                <div class="scan-target" aria-hidden="true"><i></i><i></i><i></i><i></i><span></span></div>
+              </div>
+              <div class="scanner-actions"><button class="button button-primary" id="startScan" type="button">START CAMERA <span>↗</span></button><button class="button button-ghost" id="stopScan" type="button" disabled>STOP</button></div>
+              <p class="support-note" id="scannerNote">Camera scanning works best in Chrome on Android. Manual barcode entry is always available.</p>
+            </article>
+
+            <article class="lookup-card">
+              <div class="section-label">MANUAL LOOKUP</div>
+              <form class="lookup-form" id="lookupForm">
+                <label for="barcodeInput">Barcode number</label>
+                <div class="input-row"><input id="barcodeInput" inputmode="numeric" autocomplete="off" placeholder="e.g. 000123456789" /><button class="button button-primary" type="submit">LOOK UP</button></div>
+              </form>
+              <div class="scan-tip"><span class="tip-number">01</span><p>Scan a product to see its listed price, retail price, current stock, and margin.</p></div>
+              <div class="scan-tip"><span class="tip-number">02</span><p>Tap <b>SELL ONE</b> after a checkout. Stock changes are saved on this device.</p></div>
+            </article>
+          </div>
+
+          <article class="visual-assist-card">
+            <div class="section-heading"><div><span class="section-label">VISUAL ASSIST</span><h2>Can’t find the barcode?</h2></div><span class="scanner-state" id="visualState">READY</span></div>
+            <p class="body-copy">Point the camera at the item and capture a visual match. Stockroom compares it with product reference photos, then asks you to confirm before showing the price or changing stock.</p>
+            <div class="visual-actions"><button class="button button-primary" id="visualMatch" type="button" disabled>CAPTURE ITEM <span>⌁</span></button><button class="button button-ghost" id="visualCatalog" type="button">CHOOSE FROM CATALOG</button></div>
+            <div class="visual-result" id="visualResult" hidden></div>
+          </article>
+
+          <article class="result-card is-empty" id="productResult" aria-live="polite">
+            <div class="empty-result" id="emptyResult"><span class="result-icon">⌕</span><span>Scan or enter a barcode to begin.</span></div>
+            <div class="product-result-content" id="productResultContent" hidden>
+              <div class="product-result-top"><div><span class="eyebrow" id="resultCategory">SNACKS</span><h2 id="resultName">Potato Chips</h2><span class="barcode-text" id="resultBarcode">000123456789</span></div><span class="stock-badge" id="resultStockBadge">IN STOCK</span></div>
+              <div class="price-grid"><div><span class="metric-label">RETAIL PRICE</span><strong id="resultRetail">₱0.00</strong></div><div><span class="metric-label">LISTED PRICE</span><strong id="resultListed">₱0.00</strong></div><div><span class="metric-label">MARGIN</span><strong id="resultMargin">₱0.00</strong></div><div><span class="metric-label">ON HAND</span><strong id="resultStock">0</strong></div></div>
+              <div class="result-actions"><button class="button button-primary" id="sellOne" type="button">SELL ONE <span>−</span></button><button class="button button-ghost" id="restockOne" type="button">RESTOCK <span>+</span></button></div>
+              <p class="result-message" id="resultMessage"></p>
+            </div>
+          </article>
+
+          <section class="recent-section"><div class="section-heading"><span class="section-label">RECENT SCANS</span><span class="muted-text" id="scanCount">0 scans</span></div><div class="recent-list" id="recentList"><p class="muted-text">Your recent lookups will appear here.</p></div></section>
+        </section>
+
+        <section class="view" id="inventoryView" data-view-panel="inventory">
+          <div class="page-heading"><div><span class="eyebrow">CATALOG / 002</span><h1>Inventory.</h1></div><button class="button button-primary" id="focusAddProduct" type="button">ADD PRODUCT <span>+</span></button></div>
+          <div class="inventory-stats"><div><span class="metric-label">PRODUCTS</span><strong id="productCount">0</strong></div><div><span class="metric-label">UNITS ON HAND</span><strong id="unitCount">0</strong></div><div class="stat-warning"><span class="metric-label">LOW STOCK</span><strong id="lowStockCount">0</strong></div></div>
+          <div class="toolbar"><label class="search-box"><span>⌕</span><input id="inventorySearch" type="search" placeholder="Search name, category, or barcode" /></label><select id="inventoryFilter" aria-label="Filter inventory"><option value="all">All products</option><option value="low">Low stock</option><option value="out">Out of stock</option></select></div>
+          <div class="inventory-list" id="inventoryList"></div>
+          <article class="add-product-card" id="addProductCard"><div class="section-heading"><div><span class="section-label">NEW PRODUCT</span><h2>Add to catalog.</h2></div><button class="icon-close" id="closeAddProduct" type="button" aria-label="Close add product form">×</button></div><form id="productForm" class="product-form"><div class="form-grid"><label>Product name<input name="name" required placeholder="e.g. Cheese crackers" /></label><label>Barcode<input name="barcode" required inputmode="numeric" placeholder="Scan or type barcode" /></label><label>Category<input name="category" placeholder="Snacks" /></label><label>Retail price<input name="retailPrice" required type="number" min="0" step="0.01" placeholder="0.00" /></label><label>Listed price<input name="listedPrice" required type="number" min="0" step="0.01" placeholder="0.00" /></label><label>Opening stock<input name="stock" required type="number" min="0" step="1" placeholder="0" /></label><label>Reorder at<input name="reorderAt" required type="number" min="0" step="1" value="5" /></label><label>Reference photo (optional)<input name="referencePhoto" type="file" accept="image/*" capture="environment" /><small class="field-note">Used for visual matching. Add a clear front-facing photo.</small></label></div><button class="button button-primary" type="submit">SAVE PRODUCT <span>↗</span></button></form></article>
+        </section>
+
+        <section class="view" id="settingsView" data-view-panel="settings">
+          <div class="page-heading"><div><span class="eyebrow">SYSTEM / 003</span><h1>Settings.</h1></div></div>
+          <article class="settings-card"><div class="section-heading"><div><span class="section-label">STORE PROFILE</span><h2>Your counter.</h2></div></div><form id="settingsForm" class="settings-form"><label>Store name<input id="storeNameInput" required maxlength="32" /></label><label>Low-stock warning threshold<input id="lowStockInput" type="number" min="0" step="1" required /></label><button class="button button-primary" type="submit">SAVE SETTINGS</button></form></article>
+          <article class="settings-card"><div class="section-heading"><div><span class="section-label">DATA</span><h2>Your inventory, your device.</h2></div></div><p class="body-copy">Stockroom stores your catalog and stock movements in this browser only. Export a backup regularly if this device is shared or reset.</p><div class="data-actions"><button class="button button-ghost" id="exportData" type="button">EXPORT BACKUP ↓</button><button class="button button-ghost" id="importData" type="button">IMPORT BACKUP ↑</button><input id="importFile" type="file" accept="application/json" hidden /></div></article>
+          <article class="settings-card caution-card"><div class="section-heading"><div><span class="section-label">DEMO DATA</span><h2>Start fresh.</h2></div></div><p class="body-copy">Restore the sample convenience-store catalog. This replaces your current local catalog.</p><button class="button button-danger" id="resetData" type="button">RESTORE SAMPLE DATA</button></article>
+        </section>
+      </main>
+
+      <nav class="bottom-nav" aria-label="Primary navigation"><button class="nav-button is-active" data-view="scan" type="button"><span>⌖</span>SCAN</button><button class="nav-button" data-view="inventory" type="button"><span>▦</span>INVENTORY</button><button class="nav-button" data-view="settings" type="button"><span>⊙</span>SETTINGS</button></nav>
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    </div>
+    <script src="app.js"></script>
+  </body>
+</html>
