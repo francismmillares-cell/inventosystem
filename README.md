@@ -4,7 +4,7 @@ A mobile-first convenience-store inventory and barcode price lookup app built wi
 
 ## What it does
 
-- Scans product barcodes with a phone camera when the browser supports `BarcodeDetector`.
+- Automatically scans product barcodes with the rear phone camera using a cross-browser barcode reader, with native `BarcodeDetector` fallback.
 - Offers a hybrid visual-assist mode: capture the item, compare it with saved reference photos, and confirm the suggested product.
 - Provides manual barcode entry as a reliable fallback.
 - Shows retail price, listed/selling price, estimated margin, and current stock.
@@ -24,7 +24,7 @@ python3 -m http.server 8000
 
 Then visit `http://localhost:8000`.
 
-For camera scanning on a real phone, publish the folder over HTTPS (for example with GitHub Pages, Netlify, or Cloudflare Pages). Browsers normally block camera access on ordinary insecure network URLs. The manual barcode field still works when camera scanning is unavailable.
+For camera scanning on a real phone, publish the folder over HTTPS (for example with GitHub Pages, Netlify, or Cloudflare Pages). Browsers normally block camera access on ordinary insecure network URLs. Tap **START CAMERA** once, hold a barcode in the frame, and the matching retail price, listed price, margin, and quantity will appear automatically.
 
 ## Hybrid visual workflow
 
