@@ -29,12 +29,12 @@
             <article class="scanner-card">
               <div class="scanner-header"><span class="section-label">CAMERA SCANNER</span><span class="scanner-state" id="scannerState">READY</span></div>
               <div class="camera-frame">
-                <video id="cameraPreview" playsinline muted></video>
+                <video id="cameraPreview" autoplay playsinline muted></video>
                 <div class="camera-placeholder" id="cameraPlaceholder"><span class="camera-icon">⌁</span><strong>Point at a barcode</strong><small>Use the rear camera on your phone</small></div>
                 <div class="scan-target" aria-hidden="true"><i></i><i></i><i></i><i></i><span></span></div>
               </div>
               <div class="scanner-actions"><button class="button button-primary" id="startScan" type="button">START CAMERA <span>↗</span></button><button class="button button-ghost" id="stopScan" type="button" disabled>STOP</button></div>
-              <p class="support-note" id="scannerNote">Camera scanning works best in Chrome on Android. Manual barcode entry is always available.</p>
+              <p class="support-note" id="scannerNote">Tap START CAMERA once, then hold any catalog barcode inside the frame. Prices and stock appear automatically.</p>
             </article>
 
             <article class="lookup-card">
@@ -87,6 +87,7 @@
       <nav class="bottom-nav" aria-label="Primary navigation"><button class="nav-button is-active" data-view="scan" type="button"><span>⌖</span>SCAN</button><button class="nav-button" data-view="inventory" type="button"><span>▦</span>INVENTORY</button><button class="nav-button" data-view="settings" type="button"><span>⊙</span>SETTINGS</button></nav>
       <div class="toast" id="toast" role="status" aria-live="polite"></div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/@zxing/browser@0.2.0/umd/index.min.js" crossorigin="anonymous"></script>
     <script src="app.js"></script>
   </body>
 </html>
