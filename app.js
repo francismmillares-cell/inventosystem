@@ -24,6 +24,8 @@
     resultMessageType: '',
     stream: null,
     detector: null,
+    zxingReader: null,
+    zxingControls: null,
     scanTimer: null,
     scanning: false,
   };
@@ -301,28 +303,64 @@
 
   function setScannerStatus(label, note = '') { scannerState.textContent = label; if (note) scannerNote.textContent = note; }
 
+  function setLiveScannerUi() {
+    cameraFrame.classList.add('is-live');
+    $('#startScan').disabled = true;
+    $('#stopScan').disabled = false;
+    visualMatchButton.disabled = false;
+    setVisualState('READY');
+  }
+
+  function barcodeText(result) {
+    if (!result) return '';
+    if (typeof result.getText === 'function') return normalizeBarcode(result.getText());
+    return normalizeBarcode(result.rawValue || result.text || '');
+  }
+
+  async function startZXingScanner() {
+    state.scanning = true;
+    state.zxingReader = new window.ZXingBrowser.BrowserMultiFormatReader();
+    state.zxingControls = await state.zxingReader.decodeFromConstraints(
+      { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false },
+      cameraPreview,
+      (result) => {
+        const value = barcodeText(result);
+        if (!state.scanning || !value) return;
+        lookupBarcode(value);
+        stopScanner();
+      },
+    );
+    if (!state.scanning) state.zxingControls?.stop();
+    setLiveScannerUi();
+    setScannerStatus('SCANNING', 'Hold the barcode inside the frame. The result will open automatically.');
+  }
+
+  async function startNativeScanner() {
+    state.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+    cameraPreview.srcObject = state.stream;
+    await cameraPreview.play();
+    setLiveScannerUi();
+    let formats;
+    try { formats = await BarcodeDetector.getSupportedFormats(); } catch (error) { formats = []; }
+    state.detector = formats.length ? new BarcodeDetector({ formats }) : new BarcodeDetector();
+    state.scanning = true;
+    setScannerStatus('SCANNING', 'Hold the barcode inside the frame. The result will open automatically.');
+    scanFrame();
+  }
+
   async function startScanner() {
     if (!navigator.mediaDevices?.getUserMedia) { setScannerStatus('UNAVAILABLE', 'This browser cannot access the camera. Use manual barcode entry or open the app in a secure mobile browser.'); showToast('Camera unavailable on this browser.'); return; }
     try {
-      state.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
-      cameraPreview.srcObject = state.stream;
-      await cameraPreview.play();
-      cameraFrame.classList.add('is-live');
-      $('#startScan').disabled = true;
-      $('#stopScan').disabled = false;
-      visualMatchButton.disabled = false;
-      setVisualState('READY');
-      if (!('BarcodeDetector' in window)) {
-        setScannerStatus('CAMERA ON', 'Camera preview is active, but this browser has no native barcode detector. Enter the barcode manually below.');
-        return;
+      setScannerStatus('STARTING', 'Opening the rear camera and barcode reader…');
+      if (window.ZXingBrowser?.BrowserMultiFormatReader) {
+        await startZXingScanner();
+      } else if ('BarcodeDetector' in window) {
+        await startNativeScanner();
+      } else {
+        throw new Error('No barcode reader is available in this browser.');
       }
-      let formats;
-      try { formats = await BarcodeDetector.getSupportedFormats(); } catch (error) { formats = []; }
-      state.detector = formats.length ? new BarcodeDetector({ formats }) : new BarcodeDetector();
-      state.scanning = true;
-      setScannerStatus('SCANNING', 'Hold the barcode inside the frame.');
-      scanFrame();
     } catch (error) {
+      stopScanner();
       setScannerStatus('CAMERA ERROR', 'Camera permission was denied or the camera is already in use. Manual lookup is still available.');
       showToast('Could not start the camera.');
     }
@@ -344,6 +382,10 @@
     state.scanning = false;
     clearTimeout(state.scanTimer);
     state.detector = null;
+    if (state.zxingControls) { try { state.zxingControls.stop(); } catch (error) { /* Already stopped. */ } }
+    state.zxingControls = null;
+    if (state.zxingReader?.reset) state.zxingReader.reset();
+    state.zxingReader = null;
     if (state.stream) state.stream.getTracks().forEach((track) => track.stop());
     state.stream = null;
     cameraPreview.srcObject = null;
